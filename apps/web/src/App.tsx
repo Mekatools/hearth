@@ -1,45 +1,84 @@
-import type { Component } from 'solid-js';
+import { createSignal, onMount, Show, type Component } from 'solid-js';
+import { loadIdentity, type StoredIdentity } from './lib/identity';
+import { Onboarding } from './components/Onboarding';
 
 const App: Component = () => {
+  const [identity, setIdentity] = createSignal<StoredIdentity | null>(null);
+  const [loading, setLoading] = createSignal(true);
+
+  onMount(async () => {
+    try {
+      const saved = await loadIdentity();
+      if (saved) {
+        setIdentity(saved);
+      }
+    } catch (err) {
+      console.error('Error loading identity:', err);
+    } finally {
+      setLoading(false);
+    }
+  });
+
   return (
-    <div style={{
-      display: 'flex',
-      "align-items": 'center',
-      "justify-content": 'center',
-      height: '100%',
-      "flex-direction": 'column',
-      gap: '16px'
-    }}>
-      <div style={{
-        width: '64px',
-        height: '64px',
-        "background-color": 'var(--accent)',
-        "border-radius": '24px',
-        display: 'flex',
-        "align-items": 'center',
-        "justify-content": 'center',
-        "box-shadow": '0 8px 24px rgba(0,0,0,0.3)'
-      }}>
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="white">
-          <path d="M12 2C6.48 2 2 6.48 2 12c0 1.82.49 3.53 1.34 5L2 22l5.2-1.31C8.6 21.49 10.25 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z"/>
-        </svg>
-      </div>
-      <h1 style={{ color: 'var(--text-header)', "font-size": '24px', "font-weight": '700' }}>
-        Hearth
-      </h1>
-      <p style={{ color: 'var(--text-muted)', "font-size": '14px', "max-width": '360px', "text-align": 'center' }}>
-        Discord-style real-time chat. No logins, no passwords, 100% serverless on Cloudflare.
-      </p>
-      <div style={{
-        "background-color": 'var(--bg-secondary)',
-        padding: '8px 16px',
-        "border-radius": '8px',
-        "font-size": '12px',
-        color: '#22c55e',
-        "font-weight": '600'
-      }}>
-        ● Solid.js Frontend Running Cleanly
-      </div>
+    <div style={{ height: '100%', display: 'flex' }}>
+      <Show when={!loading()}>
+        <Show
+          when={identity()}
+          fallback={<Onboarding onComplete={(id) => setIdentity(id)} />}
+        >
+          {/* Main App Workspace (Logged in via WebCrypto) */}
+          <div style={{
+            display: 'flex',
+            "flex-direction": 'column',
+            "align-items": 'center',
+            "justify-content": 'center',
+            width: '100%',
+            height: '100%',
+            gap: '16px'
+          }}>
+            <div style={{
+              width: '80px',
+              height: '80px',
+              "border-radius": '50%',
+              background: identity()?.profile.accentColor || 'var(--accent)',
+              display: 'flex',
+              "align-items": 'center',
+              "justify-content": 'center',
+              "font-size": '32px',
+              "font-weight": 'bold',
+              color: '#fff',
+              "box-shadow": '0 8px 24px rgba(0,0,0,0.4)'
+            }}>
+              {identity()?.profile.displayName.charAt(0).toUpperCase()}
+            </div>
+            
+            <h1 style={{ color: 'var(--text-header)', "font-size": '26px' }}>
+              {identity()?.profile.displayName}
+            </h1>
+            <p style={{
+              color: 'var(--text-muted)',
+              "font-family": 'monospace',
+              background: 'var(--bg-secondary)',
+              padding: '6px 14px',
+              "border-radius": '6px',
+              "font-size": '14px',
+              border: '1px solid var(--border)'
+            }}>
+              {identity()?.profile.handle}
+            </p>
+            <p style={{
+              color: '#22c55e',
+              "font-size": '12px',
+              "font-weight": '600',
+              background: 'rgba(34, 197, 94, 0.1)',
+              padding: '4px 10px',
+              "border-radius": '4px'
+            }}>
+              ✓ Cryptographic ECDSA Keypair Active in IndexedDB
+            </p>
+          </div>
+        </Show>
+      </Show>
     </div>
   );
 };
