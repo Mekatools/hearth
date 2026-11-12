@@ -3,10 +3,11 @@ main = "src/index.ts"
 compatibility_date = "2024-11-01"
 compatibility_flags = ["nodejs_compat"]
 
-# Host our Solid.js frontend directly!
+# Host our Solid.js frontend directly with built-in SPA routing!
 [assets]
 directory = "../web/dist"
 binding = "ASSETS"
+not_found_handling = "single-page-application"
 
 # Durable Object binding for real-time chat channels
 [durable_objects]
